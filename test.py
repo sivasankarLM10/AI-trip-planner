@@ -37,7 +37,7 @@ example_destinations = [''
 random_destination = random.choice(example_destinations)
 
 now_date = datetime.now()
-budget=st.sidebar.slider('Budget', 0, 100000000, 10000)
+budget=int()
 # round to nearest 15 minutes
 now_date = now_date.replace(minute=now_date.minute // 15 * 15, second=0, microsecond=0)
 
@@ -108,7 +108,7 @@ with st.form(key='trip_form'):
                      key='departure_from')
         st.date_input('Departure Date', value=now_date + timedelta(days=1), key='departure_date')
         st.time_input('Departure Time', value=now_time, key='departure_time')
-    with st.expander("Additional Information"):
+    with st.expander("Additional Information (optional)",expanded=True):
         st.text_area('', height=200, value='I want to visit as many places as possible! (respect time)', key='additional_information')
         st.subheader('Trip Schedule')
         st.write(st.session_state.output)
@@ -125,11 +125,11 @@ with st.form(key='trip_form'):
         st.subheader('Trip Schedule')
         st.write(st.session_state.output)
 
+
 destination = st.text_input("Enter your preferred travel destination:",value=random_destination)
 try:
     location = gmaps.geocode(destination)[0]['geometry']['location']
 except:
-    st.warning("Invalid destination input. Setting up a random location instead.")
     location = {'lat': random.uniform(-90, 90), 'lng': random.uniform(-180, 180)}
 
 # Set up Google Maps API key
@@ -145,8 +145,8 @@ if st.button("Load street view"):
 # set up API key and create client object
 # define Google Maps client
 # get the location coordinates of the destination
-gmaps.configure(api_key='AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI')
 if destination:
+    gmaps.configure(api_key='AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI')
     location = gmaps.geocode(destination)[0]['geometry']['location']
 
     # create map component to display popular tourist spots and landmarks near the destination
