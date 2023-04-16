@@ -126,37 +126,62 @@ with st.form(key='trip_form'):
         st.subheader('Have a wonderful Journey!')
 
 
-destination = st.text_input("Enter your preferred travel destination:",value=random_destination)
+gmaps = googlemaps.Client(key='AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI')
+
+# Get a random destination
+# Ask user for travel destination
+destination = st.text_input("Enter your preferred travel destination:", value=random_destination)
+
+# Get the location of the destination
 try:
     location = gmaps.geocode(destination)[0]['geometry']['location']
 except:
     location = {'lat': random.uniform(-90, 90), 'lng': random.uniform(-180, 180)}
 
-# Set up Google Maps API key
+# Load street view
 st.text("Click the button to load the street view")
 if st.button("Load street view"):
     html = f'<iframe width="100%" height="800px" src="https://www.google.com/maps/embed/v1/streetview?key=AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI&location={location["lat"]},{location["lng"]}&heading=210&pitch=10" frameborder="0" allowfullscreen></iframe>'
     st.markdown(html, unsafe_allow_html=True)
 
-# Create map component to display popular tourist spots and landmarks near the destination
-# Create map component to display popular tourist spots and landmarks near the destination
-# Create map component to display popular tourist spots and landmarks near the destination
-
-# set up API key and create client object
-# define Google Maps client
-# get the location coordinates of the destination
+# Display map and tourist spots
 if destination:
-    gmaps.configure(api_key='AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI')
-    location = gmaps.geocode(destination)[0]['geometry']['location']
-
-    # create map component to display popular tourist spots and landmarks near the destination
+    # Get popular tourist spots and landmarks near the destination
     places = gmaps.places_nearby(
         location=(location['lat'], location['lng']), 
         radius=5000, 
         type='tourist_attraction'
     )
-    markers = [(place['name'], place['geometry']['location']['lat'], place['geometry']['location']['lng']) for place in places['results']]
-    map_fig = gmaps.figure(center=(location['lat'], location['lng']), zoom_level=12)
-    marker_layer = gmaps.marker_layer(markers, info_box_content=[marker[0] for marker in markers])
-    map_fig.add_layer(marker_layer)
-    st.write(map_fig)
+
+    try:
+        # Create map with markers for tourist spots
+        markers = [(place['name'], place['geometry']['location']['lat'], place['geometry']['location']['lng']) for place in places['results']]
+        map_fig = gmaps.figure(center=(location['lat'], location['lng']), zoom_level=12)
+        marker_layer = gmaps.marker_layer(markers, info_box_content=[marker[0] for marker in markers])
+        map_fig.add_layer(marker_layer)
+        st.write(map_fig)
+        st.write(" ")
+        st.write(" ")
+        st.write(" ")
+    except AttributeError:
+        # If map cannot be loaded, display images of tourist spots
+        st.subheader(f"Here are some images of the places nearby {destination}.")
+        st.write(" ")
+        st.write(" ")
+        st.write(" ")
+        photos = [(place['name'], place['photos'][0]['photo_reference']) for place in places['results'] if 'photos' in place]
+
+        if photos:
+            col1, col2, col3 = st.columns(3)
+            for i, photo in enumerate(photos):
+                if i%3==0:
+                    col = col1
+                elif i%3==1:
+                    col = col2
+                else:
+                    col = col3
+                with col:
+                    st.write(f"### {photo[0]}")
+                    st.image(f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference={photo[1]}&key=AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI", use_column_width=True, width=400)
+        else:
+            st.write("No images available.")
