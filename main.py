@@ -1,13 +1,8 @@
 import os
 import random
 from datetime import datetime, timedelta
-import pydeck as pdk
-from PIL import Image
-import ipywidgets.embed
-from ipywidgets import HBox
 import openai
 import streamlit as st
-import streamlit.components.v1 as components
 from dotenv import load_dotenv
 import googlemaps
 import googlemaps.exceptions
@@ -19,18 +14,41 @@ import googlemaps.geocoding
 import googlemaps.geolocation
 import googlemaps.places
 import googlemaps.roads
-from googlemaps.exceptions import HTTPError
 import gmaps.datasets
-from io import BytesIO
-
+import streamlit as st
+from geonamescache import GeonamesCache
+# Load the list of world cities
 load_dotenv()
 
 st.set_page_config(
-    page_title="My App",
+    page_title="Voyagical",
     layout="wide",
     initial_sidebar_state="expanded"
 )
-gmaps = googlemaps.Client(key='AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI')
+
+# Set theme colors
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #266cb1;
+        color: #edf5e1;
+    }
+    .stSidebar .sidebar-content {
+        background-color: #05386b;
+        color: #05386B;
+    }
+    .stButton button, .stButton button:focus {
+        background-color: #edf5e1;
+        color: #266cb1;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+
+gmaps = googlemaps.Client(key='AIzaSyAxr14Xw4OxqlDfH30MxnsKC3Qjo1X5MgQ')
 openai.api_key = os.getenv('OPENAI_API_KEY')
 example_destinations = [''
 ]
@@ -52,17 +70,36 @@ def generate_prompt(BoardingPlace,destination, arrival_to, arrival_date, arrival
         raise ValueError("Arrival destination cannot be empty or None.")
     if not departure_from:
         raise ValueError("Departure location cannot be empty or None.")
+    if not (validate_place(BoardingPlace) and validate_place(destination)):
+        st.error("Please select a valid boarding or destination place.")
     return f'''
 
-Plan a trip from {BoardingPlace} to {destination} for starting date from {departure_date} to arrival date {arrival_date} with a budget of {budget} along with suggestions of the best places to stay, food and activities. Make sure to look up the most efficient route and the estimated cost of transportation and also include  {additional_information} while planning the trip.
-(Followups)[Creative suggestions] and print each days work in a seperate line.
+Give a creative trip plan from {BoardingPlace} to {destination} for starting date from {departure_date} to arrival date {arrival_date} with a budget of {budget} along with suggestions of the best places to stay, food and activities. Make sure to look up the most efficient route and the estimated cost of transportation and also include  {additional_information} along with that provide a provison to return to {BoardingPlace}. The answer should be informative and easy to understand. Add titles to each section and make sure to include the most important information.
+
+After generating the trip plan provide the summary of places to visit, Also provide an estimated cost of the entire journey.
 '''.strip()
+
+gc = GeonamesCache()
+cities = gc.get_cities()
+
+# Extract the city names from the list
+city_names = [city['name'] for city in cities.values()]
+
+# Create a dropdown menu with the list of city names
+
+# Define a function to validate that the user selects a city from the list
+def validate_place(place):
+    if place in city_names:
+        return True
+    else:
+        return False
+
+# Validate the user's selections
 
 
 
 def submit():
     prompt = generate_prompt(**st.session_state)
-
     # generate output
     output = openai.Completion.create(
         engine='text-davinci-003',
@@ -78,59 +115,47 @@ def submit():
 if 'output' not in st.session_state:
     st.session_state['output'] = ''
 
-st.write("<h1 style='text-align: center;'>AI Trip Planner</h1>", unsafe_allow_html=True)
+st.write("<h1 style='text-align: center;'>Voyagical</h1>", unsafe_allow_html=True)
 
-st.write("<h3 style='text-align: center;'>Where planning made easy!</h2>", unsafe_allow_html=True)
-st.subheader('Let’s plan a magical trip! Please provide your budget, starting and destination place, and number of days and let Voyagical do the rest.')
-
+st.write("<h2 style='text-align: center;'>Where planning made easy!</h2>", unsafe_allow_html=True)
 with st.form(key='trip_form'):
     c1, c2, c3 = st.columns(3)
 
     with c1:
         st.subheader('Location')
-        origin = st.text_input('Destination', value=random_destination, key='destination')
-        origin = st.text_input('Boarding Place', value=random_destination, key='BoardingPlace')
-        origin = st.text_input('Budget', value=budget, key='budget')
-
-    with c2:
+        origin = st.selectbox("Select your boarding place:", city_names, index=random.randint(0, len(city_names)-1), key='BoardingPlace')
+        origin = st.selectbox("Select your destination:", city_names, index=random.randint(0, len(city_names)-1), key='destination')
+        origin = st.slider('Select your budget range:', 100, 10000, (500, 5000), 100, key='budget')
+    with c3:
         st.subheader('Arrival')
 
         st.selectbox('Arrival To',
-                     ('Airport', 'Train Station', 'Bus Station', 'Ferry Terminal', 'Port', 'Roadways'),
+                     ('Roadways', 'Train Station', 'Bus Station', 'Airport', 'Port'),
                      key='arrival_to')
-        st.date_input('Arrival Date', value=now_date, key='arrival_date')
+        st.date_input('Arrival Date', value=now_date + timedelta(days=1), key='arrival_date')
         st.time_input('Arrival Time', value=now_time, key='arrival_time')
-    with c3:
+    with c2:
         st.subheader('Departure')
 
         st.selectbox('Departure From',
-                     ('Airport', 'Train Station', 'Bus Station', 'Ferry Terminal', 'Port', 'Roadways'),
+                     ('Roadways', 'Train Station', 'Bus Station', 'Airport', 'Port'),
                      key='departure_from')
-        st.date_input('Departure Date', value=now_date + timedelta(days=1), key='departure_date')
+        st.date_input('Departure Date', value=now_date, key='departure_date')
         st.time_input('Departure Time', value=now_time, key='departure_time')
     with st.expander("Additional Information (optional)",expanded=True):
         st.text_area('', height=200, value='I want to visit as many places as possible! (respect time)', key='additional_information')
-        st.write(st.session_state.output)
-
     if st.form_submit_button('Submit'):
         # Call the `submit` function to process the form data and generate the output
         submit()
-        c1.empty()
-        c2.empty()
-        c3.empty()
-        st.empty()
-
-        # Show the Trip Schedule and output elements
         st.subheader('Here is your trip Schedule')
-        st.write(st.session_state.output)
-        st.subheader('Have a wonderful Journey!')
+    st.write(st.session_state.output)
 
 
-gmaps = googlemaps.Client(key='AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI')
+gmaps = googlemaps.Client(key='AIzaSyAxr14Xw4OxqlDfH30MxnsKC3Qjo1X5MgQ')
 
 # Get a random destination
 # Ask user for travel destination
-destination = st.text_input("Enter your preferred travel destination:", value=random_destination)
+destination = st.text_input("Enter your specific place to see a 360 degree view of the place", value=random_destination)
 
 # Get the location of the destination
 try:
@@ -139,9 +164,8 @@ except:
     location = {'lat': random.uniform(-90, 90), 'lng': random.uniform(-180, 180)}
 
 # Load street view
-st.text("Click the button to load the street view")
 if st.button("Load street view"):
-    html = f'<iframe width="100%" height="800px" src="https://www.google.com/maps/embed/v1/streetview?key=AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI&location={location["lat"]},{location["lng"]}&heading=210&pitch=10" frameborder="0" allowfullscreen></iframe>'
+    html = f'<iframe width="100%" height="800px" src="https://www.google.com/maps/embed/v1/streetview?key=AIzaSyAxr14Xw4OxqlDfH30MxnsKC3Qjo1X5MgQ&location={location["lat"]},{location["lng"]}&heading=210&pitch=10" frameborder="0" allowfullscreen></iframe>'
     st.markdown(html, unsafe_allow_html=True)
 
 # Display map and tourist spots
@@ -163,25 +187,28 @@ if destination:
         st.write(" ")
         st.write(" ")
         st.write(" ")
+        
     except AttributeError:
         # If map cannot be loaded, display images of tourist spots
-        st.subheader(f"Here are some images of the places nearby {destination}.")
+        st.header(f"Here are some images of the places nearby {destination}.")
         st.write(" ")
         st.write(" ")
         st.write(" ")
         photos = [(place['name'], place['photos'][0]['photo_reference']) for place in places['results'] if 'photos' in place]
 
         if photos:
-            col1, col2, col3 = st.columns(3)
+            num_photos = len(photos)
+            num_photos_per_col = num_photos // 2  # calculate number of photos to be displayed in each column
+            if num_photos % 2 == 1:
+                num_photos_per_col += 1  # if there are an odd number of photos, add one more to make it even
+            col1, col2 = st.columns(2)
             for i, photo in enumerate(photos):
-                if i%3==0:
+                if i < num_photos_per_col:
                     col = col1
-                elif i%3==1:
-                    col = col2
                 else:
-                    col = col3
+                    col = col2
                 with col:
                     st.write(f"### {photo[0]}")
-                    st.image(f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference={photo[1]}&key=AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI", use_column_width=True, width=400)
+                    st.image(f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference={photo[1]}&key=AIzaSyAxr14Xw4OxqlDfH30MxnsKC3Qjo1X5MgQ", use_column_width=True)
         else:
             st.write("No images available.")
