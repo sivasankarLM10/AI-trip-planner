@@ -25,29 +25,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-
-# Set theme colors
-st.markdown(
-    """
-    <style>
-    .stApp {
-        background-color: #266cb1;
-        color: #edf5e1;
-    }
-    .stSidebar .sidebar-content {
-        background-color: #05386b;
-        color: #05386B;
-    }
-    .stButton button, .stButton button:focus {
-        background-color: #edf5e1;
-        color: #266cb1;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-
 gmaps = googlemaps.Client(key='AIzaSyAxr14Xw4OxqlDfH30MxnsKC3Qjo1X5MgQ')
 openai.api_key = os.getenv('OPENAI_API_KEY')
 example_destinations = [''
@@ -70,11 +47,9 @@ def generate_prompt(BoardingPlace,destination, arrival_to, arrival_date, arrival
         raise ValueError("Arrival destination cannot be empty or None.")
     if not departure_from:
         raise ValueError("Departure location cannot be empty or None.")
-    if not (validate_place(BoardingPlace) and validate_place(destination)):
-        st.error("Please select a valid boarding or destination place.")
     return f'''
 
-Give a creative trip plan from {BoardingPlace} to {destination} for starting date from {departure_date} to arrival date {arrival_date} with a budget of {budget} along with suggestions of the best places to stay, food and activities. Make sure to look up the most efficient route and the estimated cost of transportation and also include  {additional_information} along with that provide a provison to return to {BoardingPlace}. The answer should be informative and easy to understand. Add titles to each section and make sure to include the most important information.
+Give a neat and follow line spacing, create a trip plan from {BoardingPlace} to {destination} for starting date from {departure_date} to arrival date {arrival_date} with a budget of {budget} along with suggestions of the best places to stay, food and activities. Make sure to look up the most efficient route and the estimated cost of transportation and also include  {additional_information} along with that provide a provison to return to {BoardingPlace}. The answer should be informative and easy to understand. Add titles to each section and make sure to include the most important information.
 
 After generating the trip plan provide the summary of places to visit, Also provide an estimated cost of the entire journey.
 '''.strip()
@@ -123,8 +98,8 @@ with st.form(key='trip_form'):
 
     with c1:
         st.subheader('Location')
-        origin = st.selectbox("Select your boarding place:", city_names, index=random.randint(0, len(city_names)-1), key='BoardingPlace')
-        origin = st.selectbox("Select your destination:", city_names, index=random.randint(0, len(city_names)-1), key='destination')
+        origin = st.text_input('Destination', value=random_destination, key='destination')
+        origin = st.text_input('Boarding Place', value=random_destination, key='BoardingPlace')
         origin = st.slider('Select your budget range:', 100, 10000, (500, 5000), 100, key='budget')
     with c3:
         st.subheader('Arrival')
