@@ -30,7 +30,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
-gmaps = googlemaps.Client(key='AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI')
+gmaps = googlemaps.Client(key='API_KEY')
 openai.api_key = os.getenv('OPENAI_API_KEY')
 example_destinations = [''
 ]
