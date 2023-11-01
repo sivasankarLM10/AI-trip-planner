@@ -184,6 +184,6 @@ if destination:
                     col = col2
                 with col:
                     st.write(f"### {photo[0]}")
-                    st.image(f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference={photo[1]}&key=AIzaSyAxr14Xw4OxqlDfH30MxnsKC3Qjo1X5MgQ", use_column_width=True)
+                    st.image(f"https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference={photo[1]}&key=API_KEY", use_column_width=True)
         else:
             st.write("No images available.")
