@@ -140,7 +140,7 @@ except:
 
 # Load street view
 if st.button("Load street view"):
-    html = f'<iframe width="100%" height="800px" src="https://www.google.com/maps/embed/v1/streetview?key=AIzaSyAxr14Xw4OxqlDfH30MxnsKC3Qjo1X5MgQ&location={location["lat"]},{location["lng"]}&heading=210&pitch=10" frameborder="0" allowfullscreen></iframe>'
+    html = f'<iframe width="100%" height="800px" src="https://www.google.com/maps/embed/v1/streetview?key=API KEY&location={location["lat"]},{location["lng"]}&heading=210&pitch=10" frameborder="0" allowfullscreen></iframe>'
     st.markdown(html, unsafe_allow_html=True)
 
 # Display map and tourist spots
