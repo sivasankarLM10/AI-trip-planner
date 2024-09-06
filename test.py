@@ -135,7 +135,7 @@ except:
 # Set up Google Maps API key
 st.text("Click the button to load the street view")
 if st.button("Load street view"):
-    html = f'<iframe width="100%" height="800px" src="https://www.google.com/maps/embed/v1/streetview?key=AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI&location={location["lat"]},{location["lng"]}&heading=210&pitch=10" frameborder="0" allowfullscreen></iframe>'
+    html = f'<iframe width="100%" height="800px" src="https://www.google.com/maps/embed/v1/streetview?key=API KEY&location={location["lat"]},{location["lng"]}&heading=210&pitch=10" frameborder="0" allowfullscreen></iframe>'
     st.markdown(html, unsafe_allow_html=True)
 
 # Create map component to display popular tourist spots and landmarks near the destination
@@ -146,7 +146,7 @@ if st.button("Load street view"):
 # define Google Maps client
 # get the location coordinates of the destination
 if destination:
-    gmaps.configure(api_key='AIzaSyAO1AHlJnhOpIPrmJ2tNoh7NZn9ObLTgYI')
+    gmaps.configure(api_key='API KEY')
     location = gmaps.geocode(destination)[0]['geometry']['location']
 
     # create map component to display popular tourist spots and landmarks near the destination
